@@ -1,6 +1,6 @@
 <launch>
 
-  <arg name="ouster_ns" doc="Override the default namespace of all ouster nodes"/>
+  <arg name="ouster_ns" default="/shafterx1/ouster" doc="Override the default namespace of all ouster nodes"/>
   <arg name="viz" doc="whether to run a rviz"/>
   <arg name="rviz_config" doc="optional rviz config file"/>
   <arg name="tf_prefix" doc="namespace for tf transforms"/>
@@ -15,7 +15,7 @@
       <param name="~/timestamp_mode" type="str" value="$(arg timestamp_mode)"/>
     </node>
   </group>
-
+/
   <group ns="$(arg ouster_ns)">
     <node pkg="nodelet" type="nodelet" name="img_node"
       output="screen" required="true"
@@ -32,9 +32,11 @@
     args="-d $(arg rviz_config)"/>
 
   <!-- for compatibility with < 2.0 rosbags -->
-  <node pkg="topic_tools" name="relay_lidar" type="relay"
-    args="/os_node/lidar_packets /$(arg ouster_ns)/lidar_packets"/>
+  <group ns="$(arg ouster_ns)">
+  <node pkg="topic_tools" name="relay_lidar" type="relay" ns="$(arg ouster_ns)"
+    args="/os_node/lidar_packets test/$(arg ouster_ns)/lidar_packets"/>
   <node pkg="topic_tools" name="relay_imu" type="relay"
-    args="/os_node/imu_packets /$(arg ouster_ns)/imu_packets"/>
+    args="/os_node/imu_packets $(arg ouster_ns)/imu_packets"/>
+  </group>
 
 </launch>
