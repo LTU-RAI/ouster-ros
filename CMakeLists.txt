@@ -26,6 +26,8 @@ find_package(
              nodelet)
 
 # ==== Options ====
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_compile_options(-Wall -Wextra)
 option(CMAKE_POSITION_INDEPENDENT_CODE "Build position independent code." ON)
 
@@ -77,27 +79,20 @@ target_link_libraries(ouster_ros PUBLIC ${catkin_LIBRARIES} ouster_build pcl_com
 add_dependencies(ouster_ros ${PROJECT_NAME}_gencpp)
 
 # ==== Executables ====
-add_library(${PROJECT_NAME}_nodelets
-  src/os_sensor_nodelet_base.cpp
+add_library(nodelets_os
+  src/os_client_base_nodelet.cpp
   src/os_sensor_nodelet.cpp
   src/os_replay_nodelet.cpp
   src/os_cloud_nodelet.cpp
-  src/os_image_nodelet.cpp
-  src/os_driver_nodelet.cpp)
-target_link_libraries(${PROJECT_NAME}_nodelets ouster_ros ${catkin_LIBRARIES})
-add_dependencies(${PROJECT_NAME}_nodelets ${PROJECT_NAME}_gencpp)
-
-# ==== Test ====
-if(CATKIN_ENABLE_TESTING)
-  catkin_add_gtest(${PROJECT_NAME}_test tests/ring_buffer_test.cpp)
-  target_link_libraries(${PROJECT_NAME}_test ${catkin_LIBRARIES})
-endif()
+  src/os_image_nodelet.cpp)
+target_link_libraries(nodelets_os ouster_ros ${catkin_LIBRARIES})
+add_dependencies(nodelets_os ${PROJECT_NAME}_gencpp)
 
 # ==== Install ====
 install(
   TARGETS
-    ${PROJECT_NAME}
-    ${PROJECT_NAME}_nodelets
+    ouster_ros
+    nodelets_os
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -111,7 +106,7 @@ install(
 install(
   FILES
     LICENSE
-    ${PROJECT_NAME}_nodelets.xml
+    nodelets_os.xml
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
