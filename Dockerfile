@@ -11,12 +11,15 @@ RUN set -xue \
 # Turn off installing extra packages globally to slim down rosdep install
 && echo 'APT::Install-Recommends "0";' > /etc/apt/apt.conf.d/01norecommend \
 && apt-get update \
-&& apt-get install -y \
- build-essential cmake \
- fakeroot dpkg-dev debhelper \
- $PY-rosdep $PY-rospkg $PY-bloom
-
-RUN apt-get install -y curl libcurl4-openssl-dev
+&& apt-get install -y       \
+    build-essential         \
+    cmake                   \
+    fakeroot                \
+    dpkg-dev                \
+    debhelper               \
+    $PY-rosdep              \
+    $PY-rospkg              \
+    $PY-bloom
 
 # Set up non-root build user
 ARG BUILD_UID=1000
@@ -26,17 +29,14 @@ RUN set -xe \
 && groupadd -o -g ${BUILD_GID} build \
 && useradd -o -u ${BUILD_UID} -d ${BUILD_HOME} -rm -s /bin/bash -g build build
 
-# Install build dependencies using rosdep
-COPY --chown=build:build package.xml $OUSTER_ROS_PATH/package.xml
+# Set up build environment
+COPY --chown=build:build . $OUSTER_ROS_PATH
 
 RUN set -xe         \
 && apt-get update   \
 && rosdep init      \
 && rosdep update --rosdistro=$ROS_DISTRO \
 && rosdep install -y --from-paths $OUSTER_ROS_PATH
-
-# Set up build environment
-COPY --chown=build:build . $OUSTER_ROS_PATH
 
 USER build:build
 WORKDIR ${BUILD_HOME}
@@ -48,9 +48,15 @@ RUN set -xe \
 
 FROM build-env
 
+SHELL ["/bin/bash", "-c"]
+
 ENV CXXFLAGS="-Werror -Wno-deprecated-declarations"
-RUN /opt/ros/$ROS_DISTRO/env.sh catkin_make -DCMAKE_BUILD_TYPE=Release \
+RUN /opt/ros/$ROS_DISTRO/env.sh catkin_make     \
+-DCMAKE_BUILD_TYPE=Release                      \
 && /opt/ros/$ROS_DISTRO/env.sh catkin_make install
+
+RUN /opt/ros/$ROS_DISTRO/env.sh catkin_make --make-args tests \
+&& source ./devel/setup.bash && rosrun ouster_ros ouster_ros_test
 
 # Entrypoint for running Ouster ros:
 #
